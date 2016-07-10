@@ -5,68 +5,61 @@
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
+DB_CENTOS_BOX_NAME    = "vStone/centos-7.x-puppet.3.x"
+DB_CENTOS_BOX_VERSION = "4.3.26.1"
 Vagrant.configure(2) do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
+  config.ssh.pty = true
+  # --------------------------- DEMO NODE 1 -----------------------------------
+  config.vm.define 'demo1' do |demo1|
+    demo1.vm.box = DB_CENTOS_BOX_NAME
+    demo1.vm.box_version = DB_CENTOS_BOX_VERSION
 
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "vStone/centos-7.x-puppet.3.x"
-  config.vm.box_version = "4.3.26.1"
 
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
+    # Setup netowrking and port forwarding
+    demo1.vm.hostname = "demo1.local.host.com"
+    demo1.vm.network 'private_network', ip: '11.33.33.101'
+    demo1.vm.network 'forwarded_port', guest: 3200, host: 3201
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+    demo1.vm.synced_folder '.', '/vagrant', id: 'vagrant-root', disabled: true
+    demo1.vm.synced_folder '.', '/home/vagrant/puppet_vagrant_example', nfs: false
+    demo1.vm.provision "shell", :inline => "sh /home/vagrant/puppet_vagrant_example/pre_tasks.sh"
 
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
+    demo1.vm.provider :virtualbox do |vb|
+      vb.customize ['modifyvm', :id, '--memory', 1048]
+    end
+    demo1.vm.provision :puppet do |puppet|
+      # puppet.binary_path = '/usr/local/bin'
+      puppet.manifests_path = 'puppet'
+      #puppet.module_path = '/etc/puppet/modules/'
+      puppet.manifest_file  = 'site.pp'
+      puppet.options        = '--verbose'
+   end
+  end
+  # --------------------------- DEMO NODE 2 -----------------------------------
+    config.vm.define 'demo2' do |demo2|
+      demo2.vm.hostname = "demo2.local"
+      demo2.vm.box = DB_CENTOS_BOX_NAME
+      demo2.vm.box_version = DB_CENTOS_BOX_VERSION
 
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
 
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+      # Setup netowrking and port forwarding
+      demo2.vm.hostname = "demo2.local.host.com"
+      demo2.vm.network 'private_network', ip: '11.33.33.102'
+      demo2.vm.network 'forwarded_port', guest: 3200, host: 3202
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
+      demo2.vm.synced_folder '.', '/vagrant', id: 'vagrant-root', disabled: true
+      demo2.vm.synced_folder '.', '/home/vagrant/puppet_vagrant_example', nfs: false
+      demo2.vm.provision "shell", :inline => "sh /home/vagrant/puppet_vagrant_example/pre_tasks.sh"
 
-  # Define a Vagrant Push strategy for pushing to Atlas. Other push strategies
-  # such as FTP and Heroku are also available. See the documentation at
-  # https://docs.vagrantup.com/v2/push/atlas.html for more information.
-  # config.push.define "atlas" do |push|
-  #   push.app = "YOUR_ATLAS_USERNAME/YOUR_APPLICATION_NAME"
-  # end
+      demo2.vm.provider :virtualbox do |vb|
+        vb.customize ['modifyvm', :id, '--memory', 1024]
+      end
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   sudo apt-get update
-  #   sudo apt-get install -y apache2
-  # SHELL
+       demo2.vm.provision :puppet do |puppet|
+        puppet.manifests_path = 'puppet'
+        puppet.manifest_file  = 'site.pp'
+        puppet.options        = '--verbose'
+      end
+    end
+
 end
