@@ -5,6 +5,7 @@
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
+# vm source: https://atlas.hashicorp.com/vStone/boxes/centos-7.x-puppet.3.x/versions/4.3.26.1
 DB_CENTOS_BOX_NAME    = "vStone/centos-7.x-puppet.3.x"
 DB_CENTOS_BOX_VERSION = "4.3.26.1"
 Vagrant.configure(2) do |config|
